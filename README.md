@@ -229,10 +229,14 @@ The notebook includes visualization of learned filters:
 The **Results** section and **Filter Visualization** were generated using the full dataset contained in `dataframe.pkl`.  
 For methodological demonstration purposes, we also introduced a smaller `toy_dataframe`, which includes only a limited subset of the data to illustrate the workflow in a simplified manner.  
 
+<<<<<<< HEAD
 Please note that the toy dataset was **not** used to produce any of the plots or reported results.  
 All final analyses and visualizations were performed exclusively on the complete dataset using the fMRI filter-based CNN architecture.
 
 ## Project Structure
+=======
+## 📁 Repository Structure
+>>>>>>> 9f1b7f5 (added license info)
 
 ```
 fMRI-PROJECT/
@@ -256,8 +260,14 @@ fMRI-PROJECT/
 ## Acknowledgments
 
 This project adapts and extends the [EEGNet/EEGModels framework](https://github.com/vlawhern/arl-eegmodels) originally developed by Vernon J. Lawhern and colleagues at the Army Research Laboratory.  
+<<<<<<< HEAD
 
 Their work on CNN architectures for EEG classification provided the foundation for the temporal–spatial convolutional design used here, which we have customized for fMRI task-state classification.
 
 
 
+=======
+Their work on CNN architectures for EEG classification provided the foundation for the temporal–spatial convolutional design used here, which we have customized for fMRI task-state classification.
+
+License This project is licensed under the MIT License — see the LICENSE
+>>>>>>> 9f1b7f5 (added license info)
