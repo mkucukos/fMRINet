@@ -255,4 +255,4 @@ fMRI-PROJECT/
 
 This project adapts and extends the [EEGNet/EEGModels framework](https://github.com/vlawhern/arl-eegmodels) originally developed by Vernon J. Lawhern and colleagues at the Army Research Laboratory.  
 
-License This project is licensed under the MIT License — see the LICENSE
+This project is licensed under the MIT License — see the LICENSE
