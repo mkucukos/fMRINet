@@ -227,16 +227,10 @@ The notebook includes visualization of learned filters:
 
 ## Important Note: 
 The **Results** section and **Filter Visualization** were generated using the full dataset contained in `dataframe.pkl`.  
-For methodological demonstration purposes, we also introduced a smaller `toy_dataframe`, which includes only a limited subset of the data to illustrate the workflow in a simplified manner.  
-
-<<<<<<< HEAD
-Please note that the toy dataset was **not** used to produce any of the plots or reported results.  
+For methodological demonstration purposes, we also introduced a smaller `toy_dataframe`, which includes only a limited subset of the data to illustrate the workflow in a simplified manner.   Please note that the toy dataset was **not** used to produce any of the plots or reported results.  
 All final analyses and visualizations were performed exclusively on the complete dataset using the fMRI filter-based CNN architecture.
 
-## Project Structure
-=======
 ## 📁 Repository Structure
->>>>>>> 9f1b7f5 (added license info)
 
 ```
 fMRI-PROJECT/
