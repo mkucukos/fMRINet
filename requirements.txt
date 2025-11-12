@@ -2,4 +2,10 @@ pandas>=1.5
 numpy>=1.23
 matplotlib>=3.6
 scikit-learn>=1.2
-tensorflow>=2.10
+tensorflow==2.10.1
+
+# AdamW optimizer note:
+# In TensorFlow 2.10.x, AdamW is NOT included in base TF.
+# You must install tensorflow-addons to use it.
+# Starting with TF 2.11, AdamW is included in tensorflow.keras.
+# tensorflow-addons==0.20.0; tensorflow=="2.10.*"
