@@ -1,259 +1,263 @@
-# fMRI Task State Classification with Deep Learning
+# fMRINet
 
-A deep learning approach for classifying cognitive task states from fMRI time series data using a custom CNN architecture adapted from EEGNet for neuroimaging data.
+<p align="center">
+  <img src="assets/images/model_architecture_table.jpg" width="80%">
+</p>
+
+A lightweight deep learning framework for classifying cognitive task states from fMRI time series data. The architecture adapts the EEGNet design — temporal filtering followed by spatial filtering via depthwise convolution — to region × time fMRI inputs.
+
+---
 
 ## Overview
 
-This framework implements a configurable classification system for fMRI task states.  
+| Component | File |
+|-----------|------|
+| Model definitions | `fMRINet/fMRINet.py` |
+| Training & evaluation notebook | `fMRINet/fMRINet_8.ipynb` |
+| Demo dataset | `fMRINet/toy_dataframe.pkl` |
+| Subject splits | `fMRINet/subjs.pickle` |
 
-- `num_classes`: number of task categories in your dataset  
-- `input_shape`: shape of your region × time × channel matrix (default `(214, 277, 1)`)
+---
 
-You can train on **any set of task labels**. For example, our demo dataset includes 6 tasks:
+## Project Structure
 
-| Task Code | Task Name                  | Label |
-|-----------|----------------------------|-------|
-| PVT       | Psychomotor Vigilance Task | 0 |
-| VWM       | Visual Working Memory      | 1 |
-| DOT       | Dot Motion Task            | 2 |
-| MOD       | Modular Task               | 3 |
-| DYN       | Dynamic Task               | 4 |
-| rest      | Resting State              | 5 |
+```
+fMRINet/
+├── fMRINet/
+│   ├── fMRINet_8.ipynb          # Main analysis notebook
+│   ├── fMRINet.py               # Model architecture (fmriNet8/16/32)
+│   ├── toy_dataframe.pkl        # Demo dataset (subset, for testing)
+│   └── subjs.pickle             # Pre-defined subject splits
+├── assets/
+│   ├── images/
+│   │   └── model_architecture_table.jpg
+│   └── plots/
+│       ├── accuracy_loss.png
+│       ├── spatial_filters.png
+│       └── temporal_filters.png
+├── requirements.txt
+├── LICENSE
+└── README.md
+```
 
-## Sample Dataset Information
+---
 
-- **Input Dimensions**: `(214, 277, 1)` → (brain regions, time points, channels)
-- **Architecture**: Custom CNN adapted from EEGNet for fMRI data
-- **Performance**: ~84% balanced accuracy on validation set
-
-## Usage Notes
-
-1. **Input requirements**: Data must be structured as `(regions × time points × channels)` arrays.  
-   - Default: `(214, 277, 1)`  
-   - Preprocessing (e.g., fMRIPrep) should be applied beforehand for artifact removal.  
-2. **Subject-based splits**: Training and validation are split by subject IDs to prevent data leakage.  
-3. **Modular architecture**: Choose between `fmriNet8`, `fmriNet16`, or `fmriNet32` depending on available compute and task complexity.  
-4. **Custom constraints**: `ZeroThresholdConstraint` enforces sparsity in spatial filters.  
-5. **Training setup**: Learning rate scheduling (halves every 200 epochs) and checkpointing are built-in.  
-6. **Filter interpretation**: Learned temporal and spatial patterns can be visualized for interpretability.  
-
-## Quick Start
-
-### 1. Environment Setup
+## Setup
 
 ```bash
-# Create and activate a new conda environment
-conda create --name tf python=3.8
-conda activate tf
-
-
-# Install dependencies
+# Python 3.10 recommended
+python -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-### TensorFlow & AdamW Note
+```
 
-- For TensorFlow **2.11+**, `AdamW` is included in `tensorflow.keras` (no extra steps).  
-- For TensorFlow **2.10.x**, `AdamW` comes from `tensorflow-addons`.  
+> **TensorFlow & AdamW**: `AdamW` is available directly in `tensorflow.keras.optimizers` from TF 2.11 onwards. For TF 2.10.x, install `tensorflow-addons` separately.
 
-### 2. Required Files
+---
 
-Ensure these files are in your project directory:
-- `fMRINet/toy_dataframe.pkl` - Demo fMRI dataset (for testing)
-- `fMRINet/dataframe.pkl` - Full fMRI dataset (contact author for access)
-- `fMRINet/subjs.pickle` - Pre-defined subject splits
-- `fMRINet/fMRINet_8.ipynb` - Main notebook
-- `fMRINet/fMRINet.py` - Model architecture definitions
+## Datasets
 
-### 3. Run the Analysis
+The demo `toy_dataframe.pkl` is a small subset included in this repo for workflow testing. The full `dataframe.pkl` used for the reported results is not publicly distributed — contact the author for access.
 
-Execute notebook cells sequentially for complete analysis pipeline.
+Each row in the DataFrame contains:
 
-## 📋 Step-by-Step Workflow
+| Column | Description |
+|--------|-------------|
+| `Task` | Integer class label (0–5) |
+| `Time_Series_Data` | 2D array of shape `(regions, time_points)` |
+| `subject` | Subject ID string |
+| `session` | Session number |
 
-### Step 1: Data Loading and Preprocessing
+Supported task labels:
+
+| Code | Task | Label |
+|------|------|-------|
+| PVT | Psychomotor Vigilance Task | 0 |
+| VWM | Visual Working Memory | 1 |
+| DOT | Dot Motion Task | 2 |
+| MOD | Modular Task | 3 |
+| DYN | Dynamic Task | 4 |
+| rest | Resting State | 5 |
+
+---
+
+## Pipeline
+
+### 1 — Data Loading
 
 ```python
-# Load pickled toy_dataframe and subject splits
-df = pd.read_pickle('toy_dataframe.pkl')
+import pandas as pd, pickle
+df = pd.read_pickle('toy_dataframe.pkl')   # or dataframe.pkl for full data
+
 with open('subjs.pickle', 'rb') as f:
     subjs = pickle.load(f)
 
-# Split data by subjects (no data leakage)
 train_df = df[df['subject'].isin(subjs[0:45])]
-valid_df = df[df['subject'].isin(subjs[45:,])]
+valid_df = df[df['subject'].isin(subjs[45:])]
 ```
 
-### Step 2: Data Transformation
+### 2 — Data Transformation
 
 ```python
-# Transform data to proper tensor format
+import numpy as np
+
 train_data = np.dstack(train_df['Time_Series_Data'])
 train_data = np.expand_dims(train_data, axis=0)
 train_data = np.transpose(train_data, axes=[3, 2, 1, 0])
-# Final shape: (batch, regions, time_points, channels)
+# Final shape: (batch, regions, time_points, 1)
 ```
 
-### Step 3: Class Balancing
+### 3 — Class Balancing
 
 ```python
-# Calculate balanced class weights
+import sklearn.utils.class_weight
+
+train_labels = np.argmax(train_label, axis=1)
+unique = np.unique(train_labels)
 weights = sklearn.utils.class_weight.compute_class_weight(
-    class_weight='balanced', 
-    classes=unique_classes, 
-    y=train_labels
+    class_weight='balanced', classes=unique, y=train_labels
 )
+class_weights = dict(enumerate(weights))
 ```
 
-### Step 4: Model Architecture Selection
+### 4 — Model Selection
+
+Three variants are available, differing only in the number of temporal filters:
 
 ```python
-# Choose from three available architectures
 from fMRINet import fmriNet8, fmriNet16, fmriNet32
 
-# Default usage (demo dataset)
-model = fmriNet8(num_classes=6)
-# model = fmriNet16(num_classes=6)  # 16 temporal filters  
-# model = fmriNet32(num_classes=6) # 32 temporal filters
+model = fmriNet8(num_classes=6, input_shape=(214, 277, 1))
+# model = fmriNet16(num_classes=6)
+# model = fmriNet32(num_classes=6)
 
-# Custom dataset (e.g., 200 regions × 300 time points × 1 channel, 4 tasks)
+# Custom dataset (e.g. 200 regions × 300 time points, 4 tasks)
 model = fmriNet8(num_classes=4, input_shape=(200, 300, 1))
 model.summary()
 ```
-### Step 5: Training Configuration
+
+### 5 — Training
 
 ```python
-# Setup training parameters
+from tensorflow.keras.callbacks import ModelCheckpoint, LearningRateScheduler
+from tensorflow.keras.optimizers import AdamW
+
 model.compile(
     loss='categorical_crossentropy',
     optimizer=AdamW(weight_decay=0.0005),
     metrics=['accuracy']
 )
 
-# Callbacks
 checkpointer = ModelCheckpoint('/tmp/checkpoint.h5', save_best_only=True)
+
 def lr_schedule(epoch):
-    return (0.001 * np.power(0.5, np.floor(epoch/200)))
+    return 0.001 * np.power(0.5, np.floor(epoch / 200))
+
 scheduler = LearningRateScheduler(lr_schedule, verbose=1)
-```
 
-### Step 6: Model Training
-
-```python
-# Train the model
 fittedModel = model.fit(
     train_data, train_label,
     batch_size=64,
-    epochs=400, 
+    epochs=400,
     validation_data=(valid_data, valid_label),
     callbacks=[checkpointer],
     class_weight=class_weights
 )
 ```
 
-### Step 7: Evaluation and Visualization
+### 6 — Evaluation
 
 ```python
-# Load best weights and evaluate
+from sklearn.metrics import balanced_accuracy_score
+
 model.load_weights('/tmp/checkpoint.h5')
 preds = model.predict(valid_data)
-balanced_accuracy = balanced_accuracy_score(
-    np.argmax(valid_label, axis=1), 
-    np.argmax(preds, axis=1)
-)
+balanced_accuracy_score(np.argmax(valid_label, axis=1), np.argmax(preds, axis=1))
 ```
 
-## Model Architecture Details
+---
 
-![Summary & Explanations of fMRINet8](assets/images/model_architecture_table.jpg)
+## Model Architecture
 
-
-<!--  -->
 ### Network Structure
+
 ```
 Input: (214, 277, 1)
     ↓
 Dropout(0.25)
     ↓
-Conv2D(8, (1,60)) - Temporal Filtering
+Conv2D(8, (1, 60)) — Temporal filtering
     ↓
-Permute → DepthwiseConv2D - Spatial Processing
+Permute → DepthwiseConv2D(depth_multiplier=4) — Spatial filtering
     ↓
-BatchNorm → ReLU → AveragePooling2D
+BatchNorm → ReLU → AveragePooling2D(1, 15)
     ↓
-SeparableConv2D(64) - Feature Extraction
+Dropout(0.5) → SeparableConv2D(64, (1, 8)) — Feature extraction
     ↓
-BatchNorm → ReLU → AveragePooling2D
+BatchNorm → ReLU → AveragePooling2D(1, 4)
     ↓
-Flatten → Dense(6) → Softmax
+Flatten → Dense(num_classes) → Softmax
 ```
 
-### Key Components
+### Key Design Choices
 
-1. **ZeroThresholdConstraint**: Custom constraint for sparsity
-2. **Temporal-Spatial Separation**: First temporal, then spatial processing
-3. **DepthwiseConv2D**: Efficient spatial feature learning
-4. **Balanced Class Weights**: Handles dataset imbalance
+| Component | Purpose |
+|-----------|---------|
+| `ZeroThresholdConstraint` | Enforces sparsity in spatial filters (weights < 0.025 zeroed) |
+| Temporal-then-spatial ordering | Separates temporal dynamics from spatial mixing |
+| `DepthwiseConv2D` | Efficient per-filter spatial weighting across brain regions |
+| Balanced class weights | Compensates for class imbalance at training time |
 
-### Model Parameters
-- **Total Parameters**: 11,558
-- **Trainable Parameters**: 11,366
-- **Non-trainable Parameters**: 192
+### Parameters (fmriNet8)
 
-##  Results
+| | Count |
+|-|-------|
+| Total | 11,558 |
+| Trainable | 11,366 |
+| Non-trainable | 192 |
 
-- **Validation Accuracy**: ~83-84%
-- **Balanced Accuracy**: ~84%
-- **Final Validation Loss**: ~0.55
+---
 
-## Accuracy/Loss Visualization
+## Results
+
+Results reported here are from the **full dataset** (`dataframe.pkl`), not the toy subset.
+
+| Metric | Value |
+|--------|-------|
+| Validation Accuracy | ~83–84% |
+| Balanced Accuracy | ~84% |
+| Final Validation Loss | ~0.55 |
+
+### Accuracy / Loss
 
 ![Accuracy/Loss](assets/plots/accuracy_loss.png)
 
-## Filter Visualization
+### Learned Filters
 
-The notebook includes visualization of learned filters:
-
-- **Temporal Filters**: 8 filters showing temporal patterns across time
-- **Spatial Filters**: 32 filters (8×4) showing spatiotemporal patterns across brain regions
-
-
-**Temporal Filters** are visualized; 
+**Temporal filters** — 8 filters capturing temporal dynamics across the fMRI time series:
 
 ![Temporal filters](assets/plots/temporal_filters.png)
 
-**Spatial Filters** are visualized; 
+**Spatial filters** — 32 filters (8 temporal × 4 depth) showing spatiotemporal patterns across brain regions:
 
 ![Spatial filters](assets/plots/spatial_filters.png)
 
+---
 
-## Important Note: 
-The **Results** section and **Filter Visualization** were generated using the full dataset contained in `dataframe.pkl`.  
-For methodological demonstration purposes, we also introduced a smaller `toy_dataframe`, which includes only a limited subset of the data to illustrate the workflow in a simplified manner.   Please note that the toy dataset was **not** used to produce any of the plots or reported results.  
-All final analyses and visualizations were performed exclusively on the complete dataset using the fMRI filter-based CNN architecture.
+## Reproducibility
 
-## Repository Structure
+- Subject splits are fixed via `subjs.pickle` — no randomness in train/validation assignment
+- Learning rate schedule: halved every 200 epochs starting from 0.001
+- Best model checkpoint saved to `/tmp/checkpoint.h5`
 
-```
-fMRI-PROJECT/
-├── assets/                          # Project assets (figures & tables)
-│   ├── images/                      # High-level tables and static diagrams
-│   │   └── model_architecture_table.jpg   # Architecture summary table
-│   └── plots/                       # Visualization outputs
-│       ├── spatial_filters.png     # Learned spatial filter visualization
-│       └── temporal_filters.png    # Learned temporal filter visualization
-│
-├── fMRINet/                         # Main project directory
-│   ├── fMRINet_8.ipynb             # Main analysis notebook
-│   ├── fMRINet.py                # Model architecture definitions
-│   ├── toy_dataframe.pkl           # Demo dataset (for testing) - [Actual data provided on the side of authors.]
-│   └── subjs.pickle                # Subject ID splits for reproducibility
-│
-├── requirements.txt                 # Python dependencies
-└── README.md                       # This file
-```
+---
 
 ## Acknowledgments
 
-This project adapts and extends the [EEGNet/EEGModels framework](https://github.com/vlawhern/arl-eegmodels) originally developed by Vernon J. Lawhern and colleagues at the Army Research Laboratory.  
+This project adapts and extends the [EEGNet / EEGModels framework](https://github.com/vlawhern/arl-eegmodels) originally developed by Vernon J. Lawhern and colleagues at the Army Research Laboratory.
 
-This project is licensed under the MIT License — see the LICENSE
+---
 
+## License
+
+MIT License — see [LICENSE](LICENSE) for details.
