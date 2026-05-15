@@ -25,7 +25,7 @@ def build_fmri_net(
     num_classes=6,
     input_shape=(214, 277, 1),
     depth_multiplier=4,
-    zero_thresh=0.025, # 0.025 zero threshold setted
+    zero_thresh=0.025,
     dropout_in=0.25,
     dropout_mid=0.5,
     temporal_kernel_sec=60,
