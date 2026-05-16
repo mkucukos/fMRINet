@@ -46,3 +46,10 @@ env/
 # OS files
 .DS_Store
 Thumbs.db
+*.swp
+
+# Claude Code local settings
+.claude/
+
+# Duplicate assets (kept at repo root only)
+fMRINet/assets/
