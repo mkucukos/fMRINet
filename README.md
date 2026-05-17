@@ -8,7 +8,10 @@
   <img src="https://img.shields.io/badge/python-3.10%2B-blue" alt="Python 3.10+">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License">
   <img src="https://img.shields.io/badge/framework-TensorFlow-orange" alt="TensorFlow">
+  <img src="https://img.shields.io/badge/framework-PyTorch-red" alt="PyTorch">
 </p>
+
+> **PyTorch users:** A PyTorch implementation is available on the [`torch` branch](https://github.com/mkucukos/fMRINet/tree/torch).
 
 A lightweight deep learning framework for classifying cognitive task states from fMRI time series data. The architecture adapts the [EEGNet](https://github.com/vlawhern/arl-eegmodels) design — separating temporal dynamics from spatial mixing via depthwise convolution — to region × time fMRI inputs, achieving ~84% balanced accuracy across six cognitive tasks.
 
