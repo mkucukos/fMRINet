@@ -4,7 +4,13 @@
   <img src="assets/images/model_architecture_table.jpg" width="80%">
 </p>
 
-A lightweight deep learning framework for classifying cognitive task states from fMRI time series data. The architecture adapts the EEGNet design — temporal filtering followed by spatial filtering via depthwise convolution — to region × time fMRI inputs.
+<p align="center">
+  <img src="https://img.shields.io/badge/python-3.10%2B-blue" alt="Python 3.10+">
+  <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License">
+  <img src="https://img.shields.io/badge/framework-TensorFlow-orange" alt="TensorFlow">
+</p>
+
+A lightweight deep learning framework for classifying cognitive task states from fMRI time series data. The architecture adapts the [EEGNet](https://github.com/vlawhern/arl-eegmodels) design — separating temporal dynamics from spatial mixing via depthwise convolution — to region × time fMRI inputs, achieving ~84% balanced accuracy across six cognitive tasks.
 
 ---
 
@@ -51,7 +57,7 @@ source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-> **TensorFlow & AdamW**: `AdamW` is available directly in `tensorflow.keras.optimizers` from TF 2.11 onwards. For TF 2.10.x, install `tensorflow-addons` separately.
+> **Note**: `AdamW` is available in `tensorflow.keras.optimizers` from TF 2.11+. TF 2.10.x users should install `tensorflow-addons` separately.
 
 ---
 
